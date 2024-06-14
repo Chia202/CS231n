@@ -34,7 +34,20 @@ def softmax_loss_naive(W, X, y, reg):
     #############################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    # pass
+    for i in range(X.shape[0]):
+        scores = X[i].dot(W)
+        scores -= np.max(scores)
+        correct_class_score = scores[y[i]]
+        sum_exp_scores = np.sum(np.exp(scores))
+        # dW += np.exp(scores).reshape(-1, 1) * X[i].reshape(1, -1) / sum_exp_scores
+        dW += X[i].reshape(-1, 1) * np.exp(scores) / sum_exp_scores
+        dW[:, y[i]] -= X[i]
+        loss += -correct_class_score + np.log(sum_exp_scores)
+
+    loss = loss / X.shape[0] + reg * np.sum(W * W)
+
+    dW = dW / X.shape[0] + 2 * reg * W
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
@@ -59,8 +72,49 @@ def softmax_loss_vectorized(W, X, y, reg):
     #############################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    # pass
+    scores = X @ W
+    scores -= np.max(scores, axis=1).reshape(-1, 1)
+    correct_class_score = scores[np.arange(X.shape[0]), y]
+    sum_exp_scores = np.sum(np.exp(scores), axis=1)
+    loss = np.sum(-correct_class_score + np.log(sum_exp_scores)) / X.shape[0] + reg * np.sum(W * W)
+
+    dW = X.T @ (np.exp(scores) / sum_exp_scores[:, np.newaxis])
+    dW -= X.T @ np.eye(W.shape[1])[y]
+    dW = dW / X.shape[0] + 2 * reg * W
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
     return loss, dW
+
+
+if __name__=='__main__':
+    # Generate a random softmax weight matrix and use it to compute the loss.
+    W = np.random.randn(3073, 10) * 0.0001
+    X_dev = np.random.randn(500, 3073)
+    y_dev = np.random.randint(10, size=500)
+    loss, grad = softmax_loss_naive(W, X_dev, y_dev, 0.0)
+
+    # As a rough sanity check, our loss should be something close to -log(0.1).
+    print('loss: %f' % loss)
+    print('sanity check: %f' % (-np.log(0.1)))
+
+    loss, grad = softmax_loss_naive(W, X_dev, y_dev, 0.0)
+
+    # As we did for the SVM, use numeric gradient checking as a debugging tool.
+    # The numeric gradient should be close to the analytic gradient.
+    # from gradient_check import grad_check_sparse
+
+    # f = lambda w: softmax_loss_naive(w, X_dev, y_dev, 0.0)[0]
+    # grad_numerical = grad_check_sparse(f, W, grad, 10)
+
+    # # similar to SVM case, do another gradient check with regularization
+    # loss, grad = softmax_loss_naive(W, X_dev, y_dev, 5e1)
+    # f = lambda w: softmax_loss_naive(w, X_dev, y_dev, 5e1)[0]
+    # grad_numerical = grad_check_sparse(f, W, grad, 10)
+
+    loss_naive, grad_naive = softmax_loss_naive(W, X_dev, y_dev, 0.000005)
+    loss_vectorized, grad_vectorized = softmax_loss_vectorized(W, X_dev, y_dev, 0.000005)
+    grad_difference = np.linalg.norm(grad_naive - grad_vectorized, ord='fro')
+    print('Loss difference: %f' % np.abs(loss_naive - loss_vectorized))
+    print('Gradient difference: %f' % grad_difference)
