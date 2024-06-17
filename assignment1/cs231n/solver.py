@@ -176,7 +176,6 @@ class Solver(object):
         batch_mask = np.random.choice(num_train, self.batch_size)
         X_batch = self.X_train[batch_mask]
         y_batch = self.y_train[batch_mask]
-
         # Compute loss and gradient
         loss, grads = self.model.loss(X_batch, y_batch)
         self.loss_history.append(loss)
