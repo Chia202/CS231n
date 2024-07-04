@@ -25,7 +25,8 @@ def affine_forward(x, w, b):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    # pass
+    out = x.reshape(x.shape[0], -1).dot(w) + b
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
@@ -57,7 +58,10 @@ def affine_backward(dout, cache):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    # pass
+    dx = dout.dot(w.T).reshape(x.shape)
+    dw = x.reshape(x.shape[0], -1).T.dot(dout)
+    db = np.sum(dout, axis=0)
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
@@ -82,7 +86,8 @@ def relu_forward(x):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    # pass
+    out = np.maximum(x, 0)
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
@@ -108,7 +113,8 @@ def relu_backward(dout, cache):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    # pass
+    dx = dout * np.where(x > 0, 1, 0)
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
@@ -137,7 +143,16 @@ def softmax_loss(x, y):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    # pass
+    N = len(y) # number of samples
+
+    P = np.exp(x - x.max(axis=1, keepdims=True)) # numerically stable exponents
+    P /= P.sum(axis=1, keepdims=True)            # row-wise probabilities (softmax)
+
+    loss = -np.log(P[range(N), y]).sum() / N # sum cross entropies as loss
+
+    P[range(N), y] -= 1
+    dx = P / N
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################

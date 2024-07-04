@@ -74,8 +74,22 @@ class FullyConnectedNet(object):
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
-
+        # pass
+        # for i in range(self.num_layers):
+            # self.params['W' + str(i + 1)] = np.random.normal(0, weight_scale, (input_dim if i == 0 else hidden_dims[i - 1], hidden_dims[i]))
+            # self.params['b' + str(i + 1)] = np.zeros(hidden_dims[i])
+        # self.params['W' + str(self.num_layers + 1)] = np.random.normal(0, weight_scale, (hidden_dims[self.num_layers], 10))
+        # self.params['b' + str(self.num_layers + 1)] = np.zeros(10)
+        self.params['W1'] = np.random.normal(0, weight_scale, (input_dim, hidden_dims[0]))
+        self.params['b1'] = np.zeros(hidden_dims[0])
+        for i in range(1, self.num_layers-1):
+            self.params['W' + str(i+1)] = np.random.normal(0, weight_scale, (hidden_dims[i-1], hidden_dims[i]))
+            self.params['b' + str(i+1)] = np.zeros(hidden_dims[i])
+        self.params['W' + str(self.num_layers)] = np.random.normal(0, weight_scale, (hidden_dims[-1], num_classes))
+        self.params['b' + str(self.num_layers)] = np.zeros(num_classes)
+        
+        # for k, v in self.params.items():
+        #     print(k, v.shape)
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
         #                             END OF YOUR CODE                             #
@@ -148,7 +162,13 @@ class FullyConnectedNet(object):
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
+        # pass
+        scores, caches = X, {}
+        for i in range(self.num_layers-1):
+            # print(f'i = {i}, X.shape = {scores.shape}')
+            scores, caches[i+1] = affine_relu_forward(scores, self.params['W' + str(i+1)], self.params['b' + str(i+1)])
+        scores, caches[self.num_layers] = affine_forward(scores, self.params['W' + str(self.num_layers)], self.params['b' + str(self.num_layers)])
+        # print(f"X.shape = {X.shape}, scores.shape = {scores.shape}")
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
@@ -175,7 +195,14 @@ class FullyConnectedNet(object):
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
+        # pass
+        loss, dscores = softmax_loss(scores, y)
+        loss += 0.5 * self.reg * np.sum([np.sum(v ** 2) for k, v in self.params.items() if k[0] == 'W'])
+        dx, grads['W' + str(self.num_layers)], grads['b' + str(self.num_layers)] = affine_backward(dscores, caches[self.num_layers])
+        grads['W' + str(self.num_layers)] += self.reg * self.params['W' + str(self.num_layers)]
+        for i in range(self.num_layers-1):
+            dx, grads['W' + str(self.num_layers-i-1)], grads['b' + str(self.num_layers-i-1)] = affine_relu_backward(dx, caches[self.num_layers-i-1])
+            grads['W' + str(self.num_layers-i-1)] += self.reg * self.params['W' + str(self.num_layers-i-1)]
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################

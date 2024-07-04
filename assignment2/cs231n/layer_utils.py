@@ -28,7 +28,10 @@ def affine_relu_backward(dout, cache):
 
 # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-pass
+# pass
+def affine_bn_relu_forward(x, w, b):
+    a, fc_cache = affine_forward(x, w, b)
+    pass
 
 # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
