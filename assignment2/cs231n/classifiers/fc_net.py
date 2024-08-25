@@ -171,7 +171,8 @@ class FullyConnectedNet(object):
             gammal = self.params.get('gamma' + l)
             betal = self.params.get('beta' + l)
             bn_paraml = self.bn_params[i-1] if self.normalization is not None else None
-            scores, caches[i] = affine_norm_relu_forward(scores, self.params['W' + l], self.params['b' + l], gammal, betal, bn_paraml, ln_param, self.normalization)
+            scores, caches[i] = affine_norm_relu_dp_forward(scores, self.params['W' + l], self.params['b' + l], gammal, betal, bn_paraml, ln_param, \
+                                                            self.dropout_param, self.normalization, self.use_dropout)
         scores, caches[self.num_layers] = affine_forward(scores, self.params['W' + str(self.num_layers)], self.params['b' + str(self.num_layers)])
         # print(f"X.shape = {X.shape}, scores.shape = {scores.shape}")
 
@@ -208,7 +209,7 @@ class FullyConnectedNet(object):
         grads['W' + str(self.num_layers)] += self.reg * self.params['W' + str(self.num_layers)]
         for i in range(1, self.num_layers):
             l = str(self.num_layers-i)
-            dx, grads['W' + l], grads['b' + l], grads['gamma' + l], grads['beta' + l] = affine_norm_relu_backward(dx, caches[int(l)], self.normalization)
+            dx, grads['W' + l], grads['b' + l], grads['gamma' + l], grads['beta' + l] = affine_norm_relu_dp_backward(dx, caches[int(l)], self.normalization, self.use_dropout)
             grads['W' + l] += self.reg * self.params['W' + l]
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
