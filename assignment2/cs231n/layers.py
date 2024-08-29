@@ -677,6 +677,33 @@ def conv_backward_naive(dout, cache):
     stride, pad = conv_param['stride'], conv_param['pad']
 
 
+    # Dimensions
+    N, C, H_padded, W_padded = x.shape
+    F, _, HH, WW = w.shape
+    _, _, H_prime, W_prime = dout.shape
+
+    # Initialize gradients
+    dx_padded = np.zeros_like(x)
+    dw = np.zeros_like(w)
+    db = np.zeros_like(b)
+
+    # Compute gradients
+    for n in range(N):
+        for f in range(F):
+            db[f] += np.sum(dout[n, f])
+            for i in range(H_prime):
+                for j in range(W_prime):
+                    h_start = i * stride
+                    w_start = j * stride
+                    h_end = h_start + HH
+                    w_end = w_start + WW
+
+                    dx_padded[n, :, h_start:h_end, w_start:w_end] += w[f] * dout[n, f, i, j]
+                    dw[f] += x[n, :, h_start:h_end, w_start:w_end] * dout[n, f, i, j]
+
+    # Remove padding from dx
+    dx = dx_padded[:, :, pad:-pad, pad:-pad]
+
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
     #                             END OF YOUR CODE                            #
@@ -710,7 +737,19 @@ def max_pool_forward_naive(x, pool_param):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    # pass
+    N, C, H, W = x.shape
+    ph, pw, stride = pool_param['pool_height'], pool_param['pool_width'], pool_param['stride']
+    Hprime = 1 + (H - ph) // stride
+    Wprime = 1 + (W - pw) // stride
+    out = np.zeros((N, C, Hprime, Wprime))
+
+    for n in range(N):
+        for c in range(C):
+            x_nc = x[n, c, :, :]
+            for hh in range(0, H - ph + 1, stride):
+                for ww in range(0, W - pw + 1, stride):
+                    out[n, c, hh // stride, ww // stride] = np.max(x_nc[hh:(hh+ph), ww:(ww+pw)])
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
@@ -736,7 +775,20 @@ def max_pool_backward_naive(dout, cache):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    # pass
+    x, pool_param = cache
+    ph, pw, stride = pool_param['pool_height'], pool_param['pool_width'], pool_param['stride']
+    N, C, H, W = x.shape
+    dx = np.zeros_like(x)
+
+    for n in range(N):
+        for c in range(C):
+            x_nc = x[n, c, :, :]
+            for hh in range(0, H - ph + 1, stride):
+                for ww in range(0, W - pw + 1, stride):
+                    x_nc_hh_ww = x_nc[hh:(hh+ph), ww:(ww+pw)]
+                    i, j = np.unravel_index(np.argmax(x_nc_hh_ww), (ph, pw))
+                    dx[n, c, hh + i, ww + j] = dout[n, c, hh  // stride, ww // stride]
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
