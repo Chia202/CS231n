@@ -148,7 +148,22 @@ class CaptioningRNN:
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
+        h0, cache_h0 = affine_forward(features, W_proj, b_proj)
+        x, cache_embedding = word_embedding_forward(captions_in, W_embed)
+        if self.cell_type == 'rnn':
+          h, cache = rnn_forward(x, h0, Wx, Wh, b)
+        else:
+          h, cache = lstm_forward(x, h0, Wx, Wh, b)
+        y, cache_h = temporal_affine_forward(h, W_vocab, b_vocab)
+        loss, dx = temporal_softmax_loss(y, captions_out, mask)
+
+        dh, grads['W_vocab'], grads['b_vocab'] = temporal_affine_backward(dx, cache_h)
+        if self.cell_type == 'rnn':
+          dx, dh0, grads['Wx'], grads['Wh'], grads['b'] = rnn_backward(dh, cache)
+        else:
+          dx, dh0, grads['Wx'], grads['Wh'], grads['b'] = lstm_backward(dh, cache)
+        grads['W_embed'] = word_embedding_backward(dx, cache_embedding)
+        dx, grads['W_proj'], grads['b_proj'] = affine_backward(dh0, cache_h0)
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
@@ -215,8 +230,28 @@ class CaptioningRNN:
         # you are using an LSTM, initialize the first cell state to zeros.        #
         ###########################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
+        # Initialize the hidden state
+        h = np.dot(features, W_proj) + b_proj
 
-        pass
+        # Initialize the first word as the <START> token
+        current_word = self._start * np.ones((N,), dtype=np.int32)
+
+        for t in range(max_length):
+            # Embed the current word
+            word_embed = W_embed[current_word]
+
+            # RNN step
+            h, _ = rnn_step_forward(word_embed, h, Wx, Wh, b)
+
+            # Compute scores for all words in the vocabulary
+            scores = np.dot(h, W_vocab) + b_vocab
+
+            # Select the word with the highest score
+            current_word = np.argmax(scores, axis=1)
+
+            # Store the sampled word in the captions array
+            captions[:, t] = current_word
+
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
