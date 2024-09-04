@@ -38,7 +38,18 @@ class PositionalEncoding(nn.Module):
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
+        for i in range(max_len):
+          for j in range(embed_dim):
+            if j % 2 == 0:
+              pe[:, i, j] = math.sin(i * math.exp(4 * math.log(10) * (-1 * j / embed_dim)))
+            else:
+              pe[:, i, j] = math.cos(i * math.exp(4 * math.log(10) * (-1 * (j-1) / embed_dim)))
+        # pe = torch.zeros(1, max_len, embed_dim)
+        # position = torch.arange(0, max_len, dtype=torch.float).unsqueeze(1)
+        # div_term = torch.exp(torch.arange(0, embed_dim, 2).float() * (-math.log(10000.0) / embed_dim))
+        
+        # pe[0, :, 0::2] = torch.sin(position * div_term)
+        # pe[0, :, 1::2] = torch.cos(position * div_term)
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
@@ -70,7 +81,7 @@ class PositionalEncoding(nn.Module):
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
+        output = self.dropout(x + self.pe[:, 0:S, :])
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
@@ -165,7 +176,15 @@ class MultiHeadAttention(nn.Module):
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
+        query = self.query(query).view(N, S, self.n_head, self.head_dim).transpose(1, 2)
+        key = self.key(key).view(N, T, self.n_head, self.head_dim).transpose(1, 2)
+        value = self.value(value).view(N, T, self.n_head, self.head_dim).transpose(1, 2)
+
+        output = query.matmul(key.transpose(-2, -1)) / (self.head_dim ** 0.5)
+        if attn_mask is not None:
+          output = output.masked_fill(attn_mask == 0, float('-inf'))
+        output = self.attn_drop(F.softmax(output, dim=-1)).matmul(value)
+        output = self.proj(output.transpose(1, 2).contiguous().view(N, S, E))
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
