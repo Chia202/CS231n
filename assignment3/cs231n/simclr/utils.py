@@ -1,4 +1,4 @@
-import pandas as pd
+# import pandas as pd
 import torch
 import torch.optim as optim
 from thop import profile, clever_format
@@ -37,6 +37,10 @@ def train(model, data_loader, train_optimizer, epoch, epochs, batch_size=32, tem
         # Then compute the loss using simclr_loss_vectorized.                        #
         ##############################################################################
         
+        _, out_left = model(x_i)
+        _, out_right = model(x_j)
+
+        loss = simclr_loss_vectorized(out_left, out_right, temperature, device)
         
         ##############################################################################
         #                               END OF YOUR CODE                             #
