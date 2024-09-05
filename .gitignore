@@ -1,0 +1,14 @@
+datasets/
+__pycache__/
+build/
+pretrained_model/
+data/
+.vscode/
+.ipynb_checkpoints/
+*.pyx
+*.pkl
+*.c
+*.so
+
+
+debugCode.py
